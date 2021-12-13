@@ -22,10 +22,9 @@ abstract class Channel<T> {
   void close() {
     _receivePort.close();
   }
-} 
+}
 
 class SingleResultChannel<R> extends Channel<Object?> {
-
   SendPort get sendPort => _receivePort.sendPort;
 
   @override
@@ -52,7 +51,6 @@ class SingleResultChannel<R> extends Channel<Object?> {
       _resultCompleter.complete(message as R);
     }
   }
-  
 }
 
 class MethodChannel extends Channel<MethodConfiguration> {
@@ -63,7 +61,7 @@ class MethodChannel extends Channel<MethodConfiguration> {
     result.ok(channel.channelPort);
   }
 
-    @override
+  @override
   MethodPort get channelPort => MethodPort(_receivePort.sendPort);
 
   @override
@@ -71,5 +69,3 @@ class MethodChannel extends Channel<MethodConfiguration> {
     message.apply(this);
   }
 }
-
-

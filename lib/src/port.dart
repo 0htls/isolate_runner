@@ -5,7 +5,6 @@ import 'channel.dart';
 import 'methods.dart';
 import 'result.dart';
 
-
 class ChannelPort<T> {
   ChannelPort(this._sendPort);
 
@@ -43,4 +42,3 @@ extension MethodPortExtension on MethodPort {
     return resultChannel.result;
   }
 }
-
