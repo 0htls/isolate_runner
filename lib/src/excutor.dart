@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'channel.dart';
-import 'result.dart';
 import 'error.dart';
 import 'port.dart';
 import 'methods.dart';
@@ -12,17 +11,18 @@ abstract class IsolateExecutor {
 
   static Future<IsolateExecutor> spawn() async {
     final resultChannel = SingleResultChannel<MethodPort>();
-    final pingPort = SingleResultChannel<void>();
+    final pingChannel = SingleResultChannel();
+
     final isolate = await Isolate.spawn<ResultPort>(
       MethodChannel.create,
       resultChannel.channelPort,
     );
     isolate.setErrorsFatal(false);
-    final ok = OK(null);
-    isolate.ping(pingPort.sendPort);
+    isolate.ping(pingChannel.sendPort);
+
     final methodPort = await resultChannel.result;
     // Ensure setErrorsFatal has completed.
-    await pingPort.result;
+    await pingChannel.result;
 
     return _SingleIsolateExecutor(isolate, methodPort);
   }
