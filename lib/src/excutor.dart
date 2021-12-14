@@ -7,15 +7,18 @@ import 'port.dart';
 import 'methods.dart';
 
 abstract class IsolateExecutor {
-  factory IsolateExecutor.lazy() = _LazyIsolateExecutor;
+  factory IsolateExecutor.lazy({String? debugNmae}) {
+    return _LazyIsolateExecutor(debugName: debugNmae);
+  }
 
-  static Future<IsolateExecutor> spawn() async {
+  static Future<IsolateExecutor> spawn({String? debugName}) async {
     final resultChannel = SingleResultChannel<MethodPort>();
     final pingChannel = SingleResultChannel();
 
     final isolate = await Isolate.spawn<ResultPort>(
       MethodChannel.create,
       resultChannel.channelPort,
+      debugName: debugName,
     );
     isolate.setErrorsFatal(false);
     isolate.ping(pingChannel.sendPort);
@@ -24,7 +27,10 @@ abstract class IsolateExecutor {
     // Ensure setErrorsFatal has completed.
     await pingChannel.result;
 
-    return _SingleIsolateExecutor(isolate, methodPort);
+    return _SingleIsolateExecutor(
+      isolate: isolate,
+      methodPort: methodPort,
+    );
   }
 
   bool get isClosed;
@@ -38,6 +44,7 @@ abstract class IsolateExecutor {
 
   Future<void> close();
 
+  /// [Isolate.kill] Isolate.kill(priority: Isolate.immediate)
   Future<void> kill();
 }
 
@@ -46,7 +53,11 @@ Never _throwAlreadyClosedError() {
 }
 
 class _SingleIsolateExecutor implements IsolateExecutor {
-  _SingleIsolateExecutor(this._isolate, this._methodPort);
+  _SingleIsolateExecutor({
+    required Isolate isolate,
+    required MethodPort methodPort,
+  })  : _isolate = isolate,
+        _methodPort = methodPort;
 
   final Isolate _isolate;
 
@@ -103,6 +114,10 @@ class _SingleIsolateExecutor implements IsolateExecutor {
 }
 
 class _LazyIsolateExecutor implements IsolateExecutor {
+  _LazyIsolateExecutor({this.debugName});
+
+  final String? debugName;
+
   var _isClosed = false;
 
   @override
@@ -116,7 +131,9 @@ class _LazyIsolateExecutor implements IsolateExecutor {
     if (_initialized == null) {
       final completer = Completer<void>();
       _initialized = completer.future;
-      _executor = (await IsolateExecutor.spawn()) as _SingleIsolateExecutor;
+      _executor = (await IsolateExecutor.spawn(
+        debugName: debugName,
+      )) as _SingleIsolateExecutor;
       completer.complete();
     }
 
