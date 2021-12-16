@@ -10,7 +10,7 @@ void main() async {
   await isolateExecutor.execute(() {
     print('Hello Isolate!');
   });
-  await isolateExecutor.executeWithArg(test, 100);
+  await isolateExecutor.executeWithArgs(test, 100);
   await isolateExecutor.close();
 }
 

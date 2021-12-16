@@ -37,8 +37,8 @@ abstract class IsolateExecutor {
 
   Future<R> execute<R>(IsolateExecutorCallback<R> callback);
 
-  Future<R> executeWithArg<R, A>(
-    IsolateExecutorCallbackWithArg<R, A> callback,
+  Future<R> executeWithArgs<R, A>(
+    IsolateExecutorCallbackWithArgs<R, A> callback,
     A arg,
   );
 
@@ -78,15 +78,15 @@ class _SingleIsolateExecutor implements IsolateExecutor {
   }
 
   @override
-  Future<R> executeWithArg<R, A>(
-    IsolateExecutorCallbackWithArg<R, A> callback,
-    A arg,
+  Future<R> executeWithArgs<R, A>(
+    IsolateExecutorCallbackWithArgs<R, A> callback,
+    A args,
   ) {
     if (isClosed) {
       _throwAlreadyClosedError();
     }
 
-    return _methodPort.invokeMethod<R>(RunWithArgMethod(callback, arg));
+    return _methodPort.invokeMethod<R>(RunWithArgsMethod(callback, args));
   }
 
   @override
@@ -169,8 +169,8 @@ class _LazyIsolateExecutor implements IsolateExecutor {
   }
 
   @override
-  Future<R> executeWithArg<R, A>(
-    IsolateExecutorCallbackWithArg<R, A> callback,
+  Future<R> executeWithArgs<R, A>(
+    IsolateExecutorCallbackWithArgs<R, A> callback,
     A arg,
   ) async {
     if (_isClosed) {
@@ -178,11 +178,11 @@ class _LazyIsolateExecutor implements IsolateExecutor {
     }
 
     if (_executor != null) {
-      return _executor!.executeWithArg<R, A>(callback, arg);
+      return _executor!.executeWithArgs<R, A>(callback, arg);
     }
 
     await _ensureExecutorInitialized();
-    return _executor!.executeWithArg<R, A>(callback, arg);
+    return _executor!.executeWithArgs<R, A>(callback, arg);
   }
 
   @override
