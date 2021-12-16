@@ -7,30 +7,13 @@ typedef IsolateExecutorCallback<R> = FutureOr<R> Function();
 
 typedef IsolateExecutorCallbackWithArg<R, A> = FutureOr<R> Function(A arg);
 
-class MethodConfiguration {
-  MethodConfiguration({
-    required this.method,
-    required this.resultPort,
-  });
-
-  final ChannelMethod method;
-
-  final ResultPort resultPort;
-
-  void apply(MethodChannel methodChannel) {
-    method(resultPort, methodChannel);
-  }
-}
-
 abstract class ChannelMethod {
   const ChannelMethod();
 
-  void call(ResultPort result, MethodChannel methodChannel) {
-    result.ok(null);
-  }
+  void call(ResultPort result, MethodChannel methodChannel);
 }
 
-class CloseMethod extends ChannelMethod {
+class CloseMethod implements ChannelMethod {
   const CloseMethod();
 
   @override
@@ -40,7 +23,7 @@ class CloseMethod extends ChannelMethod {
   }
 }
 
-class RunMethod<R> extends ChannelMethod {
+class RunMethod<R> implements ChannelMethod {
   RunMethod(this.callback);
 
   final IsolateExecutorCallback<R> callback;
@@ -55,7 +38,7 @@ class RunMethod<R> extends ChannelMethod {
   }
 }
 
-class RunWithArgMethod<R, A> extends ChannelMethod {
+class RunWithArgMethod<R, A> implements ChannelMethod {
   RunWithArgMethod(this.callback, this.arg);
 
   final IsolateExecutorCallbackWithArg<R, A> callback;

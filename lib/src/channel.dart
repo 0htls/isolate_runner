@@ -8,10 +8,13 @@ import 'methods.dart';
 import 'error.dart';
 import 'port.dart';
 
-abstract class Channel<T> {
-  Channel() {
+abstract class ChannelBase<T> {
+  ChannelBase() {
     _receivePort.handler = _handleMessage;
   }
+
+  bool _isClosed = false;
+  bool get isClosed => _isClosed;
 
   final _receivePort = RawReceivePort();
 
@@ -21,10 +24,11 @@ abstract class Channel<T> {
 
   void close() {
     _receivePort.close();
+    _isClosed = true;
   }
 }
 
-class SingleResultChannel<R> extends Channel<Object?> {
+class SingleResultChannel<R> extends ChannelBase<Object?> {
   SendPort get sendPort => _receivePort.sendPort;
 
   @override
@@ -53,7 +57,22 @@ class SingleResultChannel<R> extends Channel<Object?> {
   }
 }
 
-class MethodChannel extends Channel<MethodConfiguration> {
+class MethodConfiguration {
+  MethodConfiguration({
+    required this.method,
+    required this.resultPort,
+  });
+
+  final ChannelMethod method;
+
+  final ResultPort resultPort;
+
+  void apply(MethodChannel methodChannel) {
+    method(resultPort, methodChannel);
+  }
+}
+
+class MethodChannel extends ChannelBase<MethodConfiguration> {
   MethodChannel._();
 
   static void create(ResultPort result) {

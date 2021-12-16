@@ -6,7 +6,7 @@ import 'package:isolate_executor/isolate_executor.dart';
 
 void main() {
   group('IsolateExecutor', () => testIsolateExecutor(IsolateExecutor.spawn));
-  group('LazyIsolateExecutor', () => testIsolateExecutor(IsolateExecutor.lazy));
+  group('LazyIsolateExecutor', () => testIsolateExecutor(IsolateExecutor.new));
 }
 
 void testIsolateExecutor(FutureOr<IsolateExecutor> Function() createExecutor) {

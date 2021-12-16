@@ -7,7 +7,7 @@ import 'port.dart';
 import 'methods.dart';
 
 abstract class IsolateExecutor {
-  factory IsolateExecutor.lazy({String? debugNmae}) {
+  factory IsolateExecutor({String? debugNmae}) {
     return _LazyIsolateExecutor(debugName: debugNmae);
   }
 
