@@ -7,8 +7,8 @@ import 'port.dart';
 import 'methods.dart';
 
 abstract class IsolateExecutor {
-  factory IsolateExecutor({String? debugNmae}) {
-    return _LazyIsolateExecutor(debugName: debugNmae);
+  factory IsolateExecutor({String? debugName}) {
+    return _LazyIsolateExecutor(debugName: debugName);
   }
 
   static Future<IsolateExecutor> spawn({String? debugName}) async {
@@ -39,7 +39,7 @@ abstract class IsolateExecutor {
 
   Future<R> executeWithArgs<R, A>(
     IsolateExecutorCallbackWithArgs<R, A> callback,
-    A arg,
+    A args,
   );
 
   Future<void> close();
@@ -171,18 +171,18 @@ class _LazyIsolateExecutor implements IsolateExecutor {
   @override
   Future<R> executeWithArgs<R, A>(
     IsolateExecutorCallbackWithArgs<R, A> callback,
-    A arg,
+    A args,
   ) async {
     if (_isClosed) {
       _throwAlreadyClosedError();
     }
 
     if (_executor != null) {
-      return _executor!.executeWithArgs<R, A>(callback, arg);
+      return _executor!.executeWithArgs<R, A>(callback, args);
     }
 
     await _ensureExecutorInitialized();
-    return _executor!.executeWithArgs<R, A>(callback, arg);
+    return _executor!.executeWithArgs<R, A>(callback, args);
   }
 
   @override
