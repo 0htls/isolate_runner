@@ -1,4 +1,4 @@
-### Easy to use Isolate
+### An easier to use isolate.
 
 ## Usage
 ```dart

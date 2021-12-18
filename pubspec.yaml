@@ -1,6 +1,6 @@
 name: isolate_executor
-description: A simple command-line application.
-version: 1.0.0
+description: An easier to use isolate.
+version: 0.0.1
 homepage: https://github.com/0htls/isolate_executor
 
 environment:
