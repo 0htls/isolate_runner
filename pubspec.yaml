@@ -1,7 +1,7 @@
-name: isolate_executor
+name: isolate_runner
 description: A wrapper around Isolate.
 version: 0.0.1
-homepage: https://github.com/0htls/isolate_executor
+homepage: https://github.com/0htls/isolate_runner
 
 environment:
   sdk: '>=2.15.0 <3.0.0'

@@ -3,9 +3,9 @@ import 'dart:async';
 import 'port.dart';
 import 'channel.dart' show MethodChannel;
 
-typedef IsolateExecutorCallback<R> = FutureOr<R> Function();
+typedef IsolateRunnerCallback<R> = FutureOr<R> Function();
 
-typedef IsolateExecutorCallbackWithArgs<R, A> = FutureOr<R> Function(A args);
+typedef IsolateRunnerCallbackWithArgs<R, A> = FutureOr<R> Function(A args);
 
 abstract class ChannelMethod {
   const ChannelMethod();
@@ -26,7 +26,7 @@ class CloseMethod implements ChannelMethod {
 class RunMethod<R> implements ChannelMethod {
   RunMethod(this.callback);
 
-  final IsolateExecutorCallback<R> callback;
+  final IsolateRunnerCallback<R> callback;
 
   @override
   void call(ResultPort result, MethodChannel methodChannel) {
@@ -41,7 +41,7 @@ class RunMethod<R> implements ChannelMethod {
 class RunWithArgsMethod<R, A> implements ChannelMethod {
   RunWithArgsMethod(this.callback, this.args);
 
-  final IsolateExecutorCallbackWithArgs<R, A> callback;
+  final IsolateRunnerCallbackWithArgs<R, A> callback;
 
   final A args;
 

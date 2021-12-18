@@ -2,16 +2,16 @@
 
 ## Usage
 ```dart
-import 'package:isolate_executor/isolate_executor.dart';
+import 'package:isolate_runner/isolate_runner.dart';
 
 void main() async {
-  final isolateExecutor = IsolateExecutor();
+  final isolateRunner = IsolateRunner();
 
-  await isolateExecutor.execute(() {
+  await isolateRunner.run(() {
     print('Hello Isolate!');
   });
-  await isolateExecutor.executeWithArgs(test, 100);
-  await isolateExecutor.close();
+  await isolateRunner.runWithArgs(test, 100);
+  await isolateRunner.close();
 }
 
 void test(int value) {

@@ -3,10 +3,10 @@ import 'dart:isolate';
 
 import 'package:test/test.dart';
 
-import 'package:isolate_executor/src/port.dart';
-import 'package:isolate_executor/src/result.dart';
-import 'package:isolate_executor/src/channel.dart' show MethodConfiguration;
-import 'package:isolate_executor/src/methods.dart';
+import 'package:isolate_runner/src/port.dart';
+import 'package:isolate_runner/src/result.dart';
+import 'package:isolate_runner/src/channel.dart' show MethodConfiguration;
+import 'package:isolate_runner/src/methods.dart';
 
 void main() {
   group('ResultPort', testResultPort);

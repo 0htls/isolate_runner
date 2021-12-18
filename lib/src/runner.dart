@@ -6,12 +6,12 @@ import 'error.dart';
 import 'port.dart';
 import 'methods.dart';
 
-abstract class IsolateExecutor {
-  factory IsolateExecutor({String? debugName}) {
-    return _LazyIsolateExecutor(debugName: debugName);
+abstract class IsolateRunner {
+  factory IsolateRunner({String? debugName}) {
+    return _LazyIsolateRunner(debugName: debugName);
   }
 
-  static Future<IsolateExecutor> spawn({String? debugName}) async {
+  static Future<IsolateRunner> spawn({String? debugName}) async {
     final resultChannel = SingleResultChannel<MethodPort>();
     final pingChannel = SingleResultChannel();
 
@@ -27,7 +27,7 @@ abstract class IsolateExecutor {
     // Ensure setErrorsFatal has completed.
     await pingChannel.result;
 
-    return _SingleIsolateExecutor(
+    return _SingleIsolateRunner(
       isolate: isolate,
       methodPort: methodPort,
     );
@@ -35,10 +35,10 @@ abstract class IsolateExecutor {
 
   bool get isClosed;
 
-  Future<R> execute<R>(IsolateExecutorCallback<R> callback);
+  Future<R> run<R>(IsolateRunnerCallback<R> callback);
 
-  Future<R> executeWithArgs<R, A>(
-    IsolateExecutorCallbackWithArgs<R, A> callback,
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
     A args,
   );
 
@@ -49,11 +49,11 @@ abstract class IsolateExecutor {
 }
 
 Never _throwAlreadyClosedError() {
-  throw IsolateExecutorError('This executor already closed.');
+  throw IsolateRunnerError('This runner already closed.');
 }
 
-class _SingleIsolateExecutor implements IsolateExecutor {
-  _SingleIsolateExecutor({
+class _SingleIsolateRunner implements IsolateRunner {
+  _SingleIsolateRunner({
     required Isolate isolate,
     required MethodPort methodPort,
   })  : _isolate = isolate,
@@ -69,7 +69,7 @@ class _SingleIsolateExecutor implements IsolateExecutor {
   bool get isClosed => _isClosed;
 
   @override
-  Future<R> execute<R>(IsolateExecutorCallback<R> callback) {
+  Future<R> run<R>(IsolateRunnerCallback<R> callback) {
     if (isClosed) {
       _throwAlreadyClosedError();
     }
@@ -78,8 +78,8 @@ class _SingleIsolateExecutor implements IsolateExecutor {
   }
 
   @override
-  Future<R> executeWithArgs<R, A>(
-    IsolateExecutorCallbackWithArgs<R, A> callback,
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
     A args,
   ) {
     if (isClosed) {
@@ -113,8 +113,8 @@ class _SingleIsolateExecutor implements IsolateExecutor {
   }
 }
 
-class _LazyIsolateExecutor implements IsolateExecutor {
-  _LazyIsolateExecutor({this.debugName});
+class _LazyIsolateRunner implements IsolateRunner {
+  _LazyIsolateRunner({this.debugName});
 
   final String? debugName;
 
@@ -123,17 +123,17 @@ class _LazyIsolateExecutor implements IsolateExecutor {
   @override
   bool get isClosed => _isClosed;
 
-  _SingleIsolateExecutor? _executor;
+  _SingleIsolateRunner? _runner;
 
   Future<void>? _initialized;
 
-  Future<void> _ensureExecutorInitialized() async {
+  Future<void> _ensureRunnerInitialized() async {
     if (_initialized == null) {
       final completer = Completer<void>();
       _initialized = completer.future;
-      _executor = (await IsolateExecutor.spawn(
+      _runner = (await IsolateRunner.spawn(
         debugName: debugName,
-      )) as _SingleIsolateExecutor;
+      )) as _SingleIsolateRunner;
       completer.complete();
     }
 
@@ -150,39 +150,39 @@ class _LazyIsolateExecutor implements IsolateExecutor {
     if (_initialized != null) {
       await _initialized;
     }
-    await _executor?.close();
-    _executor = null;
+    await _runner?.close();
+    _runner = null;
   }
 
   @override
-  Future<R> execute<R>(IsolateExecutorCallback<R> callback) async {
+  Future<R> run<R>(IsolateRunnerCallback<R> callback) async {
     if (_isClosed) {
       _throwAlreadyClosedError();
     }
 
-    if (_executor != null) {
-      return _executor!.execute<R>(callback);
+    if (_runner != null) {
+      return _runner!.run<R>(callback);
     }
 
-    await _ensureExecutorInitialized();
-    return _executor!.execute<R>(callback);
+    await _ensureRunnerInitialized();
+    return _runner!.run<R>(callback);
   }
 
   @override
-  Future<R> executeWithArgs<R, A>(
-    IsolateExecutorCallbackWithArgs<R, A> callback,
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
     A args,
   ) async {
     if (_isClosed) {
       _throwAlreadyClosedError();
     }
 
-    if (_executor != null) {
-      return _executor!.executeWithArgs<R, A>(callback, args);
+    if (_runner != null) {
+      return _runner!.runWithArgs<R, A>(callback, args);
     }
 
-    await _ensureExecutorInitialized();
-    return _executor!.executeWithArgs<R, A>(callback, args);
+    await _ensureRunnerInitialized();
+    return _runner!.runWithArgs<R, A>(callback, args);
   }
 
   @override
@@ -195,7 +195,7 @@ class _LazyIsolateExecutor implements IsolateExecutor {
     if (_initialized != null) {
       await _initialized;
     }
-    await _executor?.kill();
-    _executor = null;
+    await _runner?.kill();
+    _runner = null;
   }
 }

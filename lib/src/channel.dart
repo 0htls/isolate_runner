@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:isolate_executor/src/port.dart';
-import 'package:isolate_executor/src/result.dart';
-
 import 'methods.dart';
+import 'result.dart';
 import 'error.dart';
 import 'port.dart';
 
@@ -48,7 +46,7 @@ class SingleResultChannel<R> extends ChannelBase<Object?> {
       _resultCompleter.complete(message.value);
     } else if (message is Err) {
       _resultCompleter.completeError(
-        IsolateExecutorError(message.error),
+        IsolateRunnerError(message.error),
         StackTrace.fromString(message.stackTrace),
       );
     } else {

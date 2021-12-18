@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
-import 'package:isolate_executor/src/channel.dart';
-import 'package:isolate_executor/src/port.dart';
-import 'package:isolate_executor/src/methods.dart';
+import 'package:isolate_runner/src/channel.dart';
+import 'package:isolate_runner/src/port.dart';
+import 'package:isolate_runner/src/methods.dart';
 
 void main() {
   test('MethodChannel', testMethodChannel);
