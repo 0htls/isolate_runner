@@ -1,5 +1,5 @@
 name: isolate_executor
-description: An easier to use isolate.
+description: A wrapper around Isolate.
 version: 0.0.1
 homepage: https://github.com/0htls/isolate_executor
 
