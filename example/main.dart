@@ -1,7 +1,3 @@
-### A wrapper around Isolate
-
-## Usage
-```dart
 import 'package:isolate_runner/isolate_runner.dart';
 
 Future<void> main() async {
@@ -18,4 +14,3 @@ Future<void> main() async {
 void test(int value) {
   print(value);
 }
-```
