@@ -1,6 +1,6 @@
 name: isolate_runner
 description: A wrapper around Isolate.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/0htls/isolate_runner
 
 environment:
