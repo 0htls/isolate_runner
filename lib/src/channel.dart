@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'methods.dart';
 import 'result.dart';
 import 'error.dart';
-import 'port.dart';
+import 'ports.dart';
 
 abstract class ChannelBase<T> {
   ChannelBase() {
@@ -15,8 +15,6 @@ abstract class ChannelBase<T> {
   bool get isClosed => _isClosed;
 
   final _receivePort = RawReceivePort();
-
-  ChannelPort<T> get channelPort;
 
   void _handleMessage(T message);
 
@@ -29,8 +27,7 @@ abstract class ChannelBase<T> {
 class SingleResultChannel<R> extends ChannelBase<Object?> {
   SendPort get sendPort => _receivePort.sendPort;
 
-  @override
-  ResultPort get channelPort => ResultPort(sendPort);
+  ResultPort<R> get resultPort => ResultPort(sendPort);
 
   final _resultCompleter = Completer<R>();
 
@@ -55,31 +52,32 @@ class SingleResultChannel<R> extends ChannelBase<Object?> {
   }
 }
 
-class MethodConfiguration {
+class MethodConfiguration<R> {
   MethodConfiguration({
     required this.method,
     required this.resultPort,
   });
 
-  final ChannelMethod method;
+  final Method<R> method;
 
-  final ResultPort resultPort;
+  final ResultPort<R> resultPort;
 
-  void apply(MethodChannel methodChannel) {
-    method(resultPort, methodChannel);
+  Future<void> apply(MethodChannel methodChannel) async {
+    try {
+      final result = method(methodChannel);
+      if (result is Future<R>) {
+        resultPort.ok(await result);
+      } else {
+        resultPort.ok(result);
+      }
+    } catch (error, stackTrace) {
+      resultPort.err(error, stackTrace);
+    }
   }
 }
 
 class MethodChannel extends ChannelBase<MethodConfiguration> {
-  MethodChannel._();
-
-  static void create(ResultPort result) {
-    final channel = MethodChannel._();
-    result.ok(channel.channelPort);
-  }
-
-  @override
-  MethodPort get channelPort => MethodPort(_receivePort.sendPort);
+  MethodPort get methodPort => MethodPort(_receivePort.sendPort);
 
   @override
   void _handleMessage(MethodConfiguration message) {

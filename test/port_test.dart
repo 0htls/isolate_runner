@@ -3,7 +3,7 @@ import 'dart:isolate';
 
 import 'package:test/test.dart';
 
-import 'package:isolate_runner/src/port.dart';
+import 'package:isolate_runner/src/ports.dart';
 import 'package:isolate_runner/src/result.dart';
 import 'package:isolate_runner/src/channel.dart' show MethodConfiguration;
 import 'package:isolate_runner/src/methods.dart';
@@ -35,7 +35,7 @@ class ChannelPortTester {
 void testResultPort() {
   test('ok', () async {
     final portTester = ChannelPortTester();
-    final resultPort = ResultPort(portTester.sendPort);
+    final resultPort = ResultPort<int>(portTester.sendPort);
 
     resultPort.ok(123);
     final result = await portTester.result;
@@ -55,14 +55,14 @@ void testResultPort() {
 }
 
 void testMethodPort() {
-  test('invokeMethod', () async {
+  test('sendMethodForResult', () async {
     final portTester = ChannelPortTester();
     final methodPort = MethodPort(portTester.sendPort);
 
-    methodPort.invokeMethod(const CloseMethod());
+    methodPort.sendMethodForResult(const Close());
     final result = await portTester.result;
     expect(result, isA<MethodConfiguration>());
 
-    expect((result as MethodConfiguration).method, isA<CloseMethod>());
+    expect((result as MethodConfiguration).method, isA<Close>());
   });
 }

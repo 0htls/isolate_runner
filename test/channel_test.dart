@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:test/test.dart';
 import 'package:isolate_runner/src/channel.dart';
-import 'package:isolate_runner/src/port.dart';
 import 'package:isolate_runner/src/methods.dart';
 
 void main() {
@@ -18,7 +19,7 @@ void testSingleResultChannel() {
   test('result ok', () async {
     final channel = SingleResultChannel<int>();
     expect(channel.isClosed, false);
-    channel.channelPort.ok(100);
+    channel.resultPort.ok(100);
     expect(await channel.result, 100);
     expect(channel.isClosed, true);
   });
@@ -26,7 +27,7 @@ void testSingleResultChannel() {
   test('result error', () async {
     final channel = SingleResultChannel();
     expect(channel.isClosed, false);
-    channel.channelPort.err(
+    channel.resultPort.err(
       StateError('channelPort.error'),
       StackTrace.current,
     );
@@ -39,34 +40,33 @@ void testSingleResultChannel() {
   });
 }
 
-class _TestMethod implements ChannelMethod {
+class _TestMethod implements Method<Object?> {
   _TestMethod(this.value);
 
   final Object? value;
 
   @override
-  void call(ResultPort result, MethodChannel methodChannel) {
-    result.ok(value);
+  Object? call(MethodChannel methodChannel) {
+    return value;
   }
 }
 
-class _CloseMethod implements ChannelMethod {
+class _CloseMethod implements Method<bool> {
   _CloseMethod();
 
   @override
-  void call(ResultPort result, MethodChannel methodChannel) {
-    result.ok(methodChannel.isClosed);
+  bool call(MethodChannel methodChannel) {
+    return methodChannel.isClosed;
   }
 }
 
 Future<void> testMethodChannel() async {
-  final resultChannel = SingleResultChannel<MethodPort>();
-  MethodChannel.create(resultChannel.channelPort);
-  final methodPort = await resultChannel.result;
+  final methodChannel = MethodChannel();
+  final methodPort = methodChannel.methodPort;
 
-  Object? result = await methodPort.invokeMethod(_TestMethod(100));
+  Object? result = await methodPort.sendMethodForResult(_TestMethod(100));
   expect(result, 100);
 
-  result = await methodPort.invokeMethod(_CloseMethod());
+  result = await methodPort.sendMethodForResult(_CloseMethod());
   expect(result, isFalse);
 }

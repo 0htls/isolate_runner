@@ -3,7 +3,7 @@ import 'dart:isolate';
 
 import 'channel.dart';
 import 'error.dart';
-import 'port.dart';
+import 'ports.dart';
 import 'methods.dart';
 
 abstract class IsolateRunner {
@@ -11,13 +11,18 @@ abstract class IsolateRunner {
     return _LazyIsolateRunner(debugName: debugName);
   }
 
+  static void _createMethodChannel(ResultPort result) {
+    final channel = MethodChannel();
+    result.ok(channel.methodPort);
+  }
+
   static Future<IsolateRunner> spawn({String? debugName}) async {
     final resultChannel = SingleResultChannel<MethodPort>();
     final pingChannel = SingleResultChannel();
 
     final isolate = await Isolate.spawn<ResultPort>(
-      MethodChannel.create,
-      resultChannel.channelPort,
+      _createMethodChannel,
+      resultChannel.resultPort,
       debugName: debugName,
     );
     isolate.setErrorsFatal(false);
@@ -74,7 +79,7 @@ class _SingleIsolateRunner implements IsolateRunner {
       _throwAlreadyClosedError();
     }
 
-    return _methodPort.invokeMethod<R>(RunMethod<R>(callback));
+    return _methodPort.sendMethodForResult<R>(Run<R>(callback));
   }
 
   @override
@@ -86,7 +91,10 @@ class _SingleIsolateRunner implements IsolateRunner {
       _throwAlreadyClosedError();
     }
 
-    return _methodPort.invokeMethod<R>(RunWithArgsMethod(callback, args));
+    return _methodPort.sendMethodForResult<R>(RunWithArgs(
+      callback,
+      args,
+    ));
   }
 
   @override
@@ -96,7 +104,7 @@ class _SingleIsolateRunner implements IsolateRunner {
     }
 
     _isClosed = true;
-    await _methodPort.invokeMethod<void>(const CloseMethod());
+    await _methodPort.sendMethodForResult<void>(const Close());
   }
 
   @override
