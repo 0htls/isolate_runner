@@ -5,8 +5,9 @@ import 'package:test/test.dart';
 import 'package:isolate_runner/isolate_runner.dart';
 
 void main() {
-  group('IsolateRunner', () => testIsolateRunner(IsolateRunner.spawn));
-  group('LazyIsolateRunner', () => testIsolateRunner(IsolateRunner.new));
+  group('IsolateRunner', () => testIsolateRunner(IsolateRunner.new));
+  group('SingleIsolateRunner', () => testIsolateRunner(IsolateRunner.new));
+  group('MultiIsolateRunner', testMultiIsolateRunner);
 }
 
 void testIsolateRunner(FutureOr<IsolateRunner> Function() createRunner) {
@@ -17,12 +18,7 @@ void testIsolateRunner(FutureOr<IsolateRunner> Function() createRunner) {
     expect(runner.isClosed, true);
   });
 
-  test('kill', () async {
-    final runner = await createRunner();
-    runner.kill();
-  });
-
-  test('execute', () async {
+  test('run', () async {
     final runner = await createRunner();
 
     Object? result;
@@ -37,4 +33,21 @@ void testIsolateRunner(FutureOr<IsolateRunner> Function() createRunner) {
 
     runner.close();
   });
+}
+
+void testMultiIsolateRunner() {
+  test('fib', () async {
+    final runner = IsolateRunner.multi(debugName: 'Runner', size: 5);
+    for (var i = 0; i < 10; i++) {
+      runner.runWithArgs(fib, 10 + i).then((value) {
+        print('fib => $value');
+      });
+    }
+    await runner.close();
+    expect(runner.isClosed, isTrue);
+  });
+}
+
+int fib(int x) {
+  return x < 2 ? x : fib(x - 1) + fib(x - 2);
 }

@@ -1,14 +1,14 @@
 name: isolate_runner
 description: A wrapper around Isolate.
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/0htls/isolate_runner
 
 environment:
   sdk: '>=2.15.0 <3.0.0'
 
 
-# dependencies:
-#   path: ^1.8.0
+#dependencies:
+#  collection: ^1.15.0
 
 dev_dependencies:
   lints: ^1.0.1
