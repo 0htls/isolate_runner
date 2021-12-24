@@ -30,12 +30,6 @@ abstract class IsolateRunner {
   Future<void> close({bool immediate = false});
 }
 
-/// Use by [_MultiRunner].
-enum RunMode {
-  nonBlocking,
-  blocking,
-}
-
 class _SingleRunner implements IsolateRunner {
   _SingleRunner({
     String? debugName,
