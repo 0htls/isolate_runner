@@ -40,7 +40,6 @@ void testMultiIsolateRunner() {
     final runner = IsolateRunner.multi(debugName: 'Runner', size: 5);
     for (var i = 0; i < 10; i++) {
       runner.runWithArgs(fib, 10 + i).then((value) {
-        print('fib => $value');
       });
     }
     await runner.close();

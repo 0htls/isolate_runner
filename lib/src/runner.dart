@@ -95,7 +95,6 @@ class StatefulRunner extends Runner {
     Method<R> method, {
     int load = 1,
   }) {
-    print(debugName);
     RangeError.checkNotNegative(load, 'load');
 
     _load += load;
