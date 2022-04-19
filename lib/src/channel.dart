@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'methods.dart';
-import 'result.dart';
 import 'error.dart';
 import 'ports.dart';
 
-abstract class ChannelBase<T> {
-  ChannelBase() {
+abstract class _ChannelBase<T> {
+  _ChannelBase() {
     _receivePort.handler = _handleMessage;
   }
 
@@ -24,7 +23,7 @@ abstract class ChannelBase<T> {
   }
 }
 
-class SingleResultChannel<R> extends ChannelBase<Object?> {
+class SingleResultChannel<R> extends _ChannelBase<Object?> {
   SendPort get sendPort => _receivePort.sendPort;
 
   ResultPort<R> get resultPort => ResultPort(sendPort);
@@ -36,18 +35,19 @@ class SingleResultChannel<R> extends ChannelBase<Object?> {
   @override
   void _handleMessage(Object? message) {
     close();
-
     assert(!_resultCompleter.isCompleted);
 
-    if (message is OK<R>) {
-      _resultCompleter.complete(message.value);
-    } else if (message is Err) {
-      _resultCompleter.completeError(
-        IsolateRunnerError(message.error),
-        StackTrace.fromString(message.stackTrace),
-      );
+    if (message is! MethodResult<R>) {
+      _resultCompleter.completeError(IsolateRunnerError('$message is! MethodResult'));
     } else {
-      _resultCompleter.complete(message as R);
+      if (message.hasError) {
+        _resultCompleter.completeError(
+          message.error,
+          message.stackTrace,
+        );
+      } else {
+        _resultCompleter.complete(message.value);
+      }
     }
   }
 }
@@ -66,17 +66,17 @@ class MethodConfiguration<R> {
     try {
       final result = method(methodChannel);
       if (result is Future<R>) {
-        resultPort.ok(await result);
+        resultPort.success(await result);
       } else {
-        resultPort.ok(result);
+        resultPort.success(result);
       }
     } catch (error, stackTrace) {
-      resultPort.err(error, stackTrace);
+      resultPort.error(error, stackTrace);
     }
   }
 }
 
-class MethodChannel extends ChannelBase<MethodConfiguration> {
+class MethodChannel extends _ChannelBase<MethodConfiguration> {
   MethodPort get methodPort => MethodPort(_receivePort.sendPort);
 
   @override

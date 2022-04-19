@@ -1,106 +1,138 @@
 import 'dart:async';
-import 'dart:isolate';
 
-import 'channel.dart';
 import 'methods.dart';
-import 'ports.dart';
-import 'error.dart';
+import 'invoker.dart';
 
-class Runner {
-  Runner({this.debugName});
+abstract class IsolateRunner {
+  factory IsolateRunner({
+    String? debugName,
+  }) = _SingleIsolateRunner;
 
-  final String? debugName;
+  /// The [size] is the number of isolates.
+  factory IsolateRunner.multi({
+    String? debugName,
+    int size,
+  }) = _MultiIsolateRunner;
 
-  Isolate? _isolate;
+  bool get isClosed;
 
-  MethodPort? _methodPort;
+  Future<R> run<R>(
+    IsolateRunnerCallback<R> callback, {
+    int load = 100,
+  });
 
-  bool _isClosed = false;
-  bool get isClosed => _isClosed;
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
+    A args, {
+    int load = 100,
+  });
 
-  Future<void>? _future;
-
-  static void _createMethodChannel(ResultPort result) {
-    final channel = MethodChannel();
-    result.ok(channel.methodPort);
-  }
-
-  Future<void> _initialize() async {
-    final resultChannel = SingleResultChannel<MethodPort>();
-    _isolate = await Isolate.spawn<ResultPort>(
-      _createMethodChannel,
-      resultChannel.resultPort,
-      debugName: debugName,
-      errorsAreFatal: false,
-    );
-    _methodPort = await resultChannel.result;
-  }
-
-  Future<void> _ensureInitialized() {
-    _future ??= _initialize();
-    return _future!;
-  }
-
-  Future<R> run<R>(Method<R> method) async {
-    if (isClosed) {
-      throw IsolateRunnerError('This runner already closed.');
-    }
-
-    if (_methodPort != null) {
-      return _methodPort!.sendMethodForResult(method);
-    }
-
-    await _ensureInitialized();
-    return _methodPort!.sendMethodForResult(method);
-  }
-
-  Future<void> close({bool immediate = false}) async {
-    if (isClosed) {
-      return;
-    }
-
-    _isClosed = true;
-    if (_isolate == null && _future == null) {
-      return;
-    }
-
-    if (_isolate == null) {
-      assert(_future != null);
-      await _future;
-    }
-
-    assert(_isolate != null && _methodPort != null);
-
-    if (immediate) {
-      final channel = SingleResultChannel();
-      _isolate!.addOnExitListener(channel.sendPort);
-      _isolate!.kill(priority: Isolate.immediate);
-      await channel.result;
-    } else {
-      await _methodPort!.sendMethodForResult(const Close());
-    }
-  }
+  Future<void> close({bool immediate = false});
 }
 
-class StatefulRunner extends Runner {
-  StatefulRunner({
+class _SingleIsolateRunner implements IsolateRunner {
+  _SingleIsolateRunner({
     String? debugName,
-  }) : super(debugName: debugName);
+  }) : _invoker = MethodInvoker(debugName: debugName);
 
-  int _load = 0;
-  int get load => _load;
+  final MethodInvoker _invoker;
+
+  @override
+  bool get isClosed => _invoker.isClosed;
 
   @override
   Future<R> run<R>(
-    Method<R> method, {
-    int load = 1,
+    IsolateRunnerCallback<R> callback, {
+    int load = 100,
   }) {
-    RangeError.checkNotNegative(load, 'load');
+    return _invoker.invoke(Run<R>(callback));
+  }
 
-    _load += load;
+  @override
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
+    A args, {
+    int load = 100,
+  }) {
+    return _invoker.invoke(RunWithArgs(
+      callback,
+      args,
+    ));
+  }
 
-    return super.run(method).whenComplete(() {
-      _load -= load;
-    });
+  @override
+  Future<void> close({bool immediate = false}) {
+    return _invoker.close(immediate: immediate);
+  }
+}
+
+extension _SingleIsolatesExtension on List<_SingleIsolateRunner> {
+  _SingleIsolateRunner get leastLoadedRunner {
+    var runner = first;
+    if (runner._invoker.load == 0) {
+      return runner;
+    }
+
+    for (var i = 1; i < length; i++) {
+      final current = this[i];
+      if (current._invoker.load == 0) {
+        return current;
+      }
+      if (current._invoker.load < runner._invoker.load) {
+        runner = current;
+      }
+    }
+    return runner;
+  }
+}
+
+class _MultiIsolateRunner implements IsolateRunner {
+  _MultiIsolateRunner({
+    String? debugName,
+    int size = 1,
+  }) : _runners = List.generate(
+          size,
+          (index) {
+            return _SingleIsolateRunner(
+              debugName: debugName == null ? null : '$debugName($index)',
+            );
+          },
+          growable: false,
+        );
+
+  final List<_SingleIsolateRunner> _runners;
+
+  @override
+  Future<void> close({bool immediate = false}) async {
+    for (final runner in _runners) {
+      await runner.close(immediate: immediate);
+    }
+  }
+
+  @override
+  bool get isClosed {
+    for (final runner in _runners) {
+      if (!runner.isClosed) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Future<R> run<R>(
+    IsolateRunnerCallback<R> callback, {
+    int load = 100,
+  }) {
+    return _runners.leastLoadedRunner.run(callback, load: load);
+  }
+
+  @override
+  Future<R> runWithArgs<R, A>(
+    IsolateRunnerCallbackWithArgs<R, A> callback,
+    A args, {
+    int load = 100,
+  }) {
+    return _runners.leastLoadedRunner.runWithArgs(callback, args, load: load);
   }
 }

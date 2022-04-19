@@ -19,7 +19,7 @@ void testSingleResultChannel() {
   test('result ok', () async {
     final channel = SingleResultChannel<int>();
     expect(channel.isClosed, false);
-    channel.resultPort.ok(100);
+    channel.resultPort.success(100);
     expect(await channel.result, 100);
     expect(channel.isClosed, true);
   });
@@ -27,7 +27,7 @@ void testSingleResultChannel() {
   test('result error', () async {
     final channel = SingleResultChannel();
     expect(channel.isClosed, false);
-    channel.resultPort.err(
+    channel.resultPort.error(
       StateError('channelPort.error'),
       StackTrace.current,
     );

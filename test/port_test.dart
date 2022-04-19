@@ -4,7 +4,6 @@ import 'dart:isolate';
 import 'package:test/test.dart';
 
 import 'package:isolate_runner/src/ports.dart';
-import 'package:isolate_runner/src/result.dart';
 import 'package:isolate_runner/src/channel.dart' show MethodConfiguration;
 import 'package:isolate_runner/src/methods.dart';
 
@@ -33,24 +32,24 @@ class ChannelPortTester {
 }
 
 void testResultPort() {
-  test('ok', () async {
+  test('ResultPort.success', () async {
     final portTester = ChannelPortTester();
     final resultPort = ResultPort<int>(portTester.sendPort);
 
-    resultPort.ok(123);
+    resultPort.success(123);
     final result = await portTester.result;
-    expect(result, isA<OK<int>>());
+    expect(result, isA<MethodResult<int>>());
 
-    expect((result as OK<int>).value, 123);
+    expect((result as MethodResult<int>).value, 123);
   });
 
-  test('err', () async {
+  test('ResultPort.error', () async {
     final portTester = ChannelPortTester();
     final resultPort = ResultPort(portTester.sendPort);
 
-    resultPort.err(StateError('error'), StackTrace.current);
+    resultPort.error(StateError('error'), StackTrace.current);
     final result = await portTester.result;
-    expect(result, isA<Err>());
+    expect(result, isA<MethodResult>());
   });
 }
 

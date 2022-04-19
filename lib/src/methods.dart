@@ -16,8 +16,8 @@ class Close implements Method<void> {
   const Close();
 
   @override
-  void call(MethodChannel methodChannel) {
-    methodChannel.close();
+  void call(MethodChannel channel) {
+    channel.close();
   }
 }
 
@@ -27,7 +27,7 @@ class Run<R> implements Method<R> {
   final IsolateRunnerCallback<R> callback;
 
   @override
-  FutureOr<R> call(MethodChannel methodChannel) {
+  FutureOr<R> call(MethodChannel channel) {
     return callback();
   }
 }
@@ -40,7 +40,7 @@ class RunWithArgs<R, A> implements Method<R> {
   final A args;
 
   @override
-  FutureOr<R> call(MethodChannel methodChannel) {
+  FutureOr<R> call(MethodChannel channel) {
     return callback(args);
   }
 }

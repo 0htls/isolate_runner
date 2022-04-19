@@ -3,22 +3,38 @@ import 'dart:isolate';
 
 import 'channel.dart';
 import 'methods.dart';
-import 'result.dart';
+
+class MethodResult<T> {
+  MethodResult.success(T value) : _value = value;
+
+  MethodResult.error(Object error, StackTrace stackTrace)
+      : _error = error,
+        _stackTrace = stackTrace;
+
+  T? _value;
+  T get value {
+    assert(!hasError);
+    return _value!;
+  }
+
+  Object? _error;
+  Object get error => _error!;
+  StackTrace? _stackTrace;
+  StackTrace get stackTrace => _stackTrace!;
+  bool get hasError => _error != null && _stackTrace != null;
+}
 
 class ResultPort<R> {
   ResultPort(this._sendPort);
 
   final SendPort _sendPort;
 
-  void ok(R value) {
-    _sendPort.send(OK(value));
+  void success(R value) {
+    _sendPort.send(MethodResult.success(value));
   }
 
-  void err<E extends Object>(E error, StackTrace stackTrace) {
-    _sendPort.send(Err(
-      error: error.toString(),
-      stackTrace: stackTrace.toString(),
-    ));
+  void error(Object error, StackTrace stackTrace) {
+    _sendPort.send(MethodResult.error(error, stackTrace));
   }
 }
 
