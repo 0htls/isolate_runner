@@ -4,7 +4,6 @@ import 'dart:isolate';
 import 'package:test/test.dart';
 
 import 'package:isolate_runner/src/ports.dart';
-import 'package:isolate_runner/src/channel.dart' show MethodConfiguration;
 import 'package:isolate_runner/src/methods.dart';
 
 void main() {

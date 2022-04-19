@@ -38,6 +38,30 @@ class ResultPort<R> {
   }
 }
 
+class MethodConfiguration<R> {
+  MethodConfiguration({
+    required this.method,
+    required this.resultPort,
+  });
+
+  final Method<R> method;
+
+  final ResultPort<R> resultPort;
+
+  Future<void> apply(MethodChannel methodChannel) async {
+    try {
+      final result = method(methodChannel);
+      if (result is Future<R>) {
+        resultPort.success(await result);
+      } else {
+        resultPort.success(result);
+      }
+    } catch (error, stackTrace) {
+      resultPort.error(error, stackTrace);
+    }
+  }
+}
+
 class MethodPort {
   MethodPort(this._sendPort);
 

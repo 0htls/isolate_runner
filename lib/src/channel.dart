@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'methods.dart';
 import 'error.dart';
 import 'ports.dart';
 
@@ -48,30 +47,6 @@ class SingleResultChannel<R> extends _ChannelBase<Object?> {
       } else {
         _resultCompleter.complete(message.value);
       }
-    }
-  }
-}
-
-class MethodConfiguration<R> {
-  MethodConfiguration({
-    required this.method,
-    required this.resultPort,
-  });
-
-  final Method<R> method;
-
-  final ResultPort<R> resultPort;
-
-  Future<void> apply(MethodChannel methodChannel) async {
-    try {
-      final result = method(methodChannel);
-      if (result is Future<R>) {
-        resultPort.success(await result);
-      } else {
-        resultPort.success(result);
-      }
-    } catch (error, stackTrace) {
-      resultPort.error(error, stackTrace);
     }
   }
 }
